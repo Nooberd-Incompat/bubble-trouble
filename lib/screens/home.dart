@@ -1,7 +1,8 @@
+import 'dart:async';
 import 'package:bubbletrouble/widgets/button.dart';
+import 'package:bubbletrouble/widgets/missile.dart';
 import 'package:bubbletrouble/widgets/player.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,66 +13,110 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   //player variables
-  double playerX = 0;
+  static double playerX = 0;
+  //missile variables
+  double missileX = playerX;
+  double missileheight = 10;
+  bool midShot = false;
 
   void moveLeft() {
     setState(() {
-      playerX -= 0.1;
+      if (playerX - 0.1 < -1) {
+      } else {
+        playerX -= 0.1;
+      }
+      //only make the X coordinate same, if the shot has not yet commenced
+      if (!midShot) {
+        missileX = playerX;
+      }
     });
   }
 
   void moveRight() {
     setState(() {
-      playerX += 0.1;
+      if (playerX + 0.1 > 1) {
+        //do nothing
+      } else {
+        playerX += 0.1;
+      }
+      //only make the X coordinate same, if the shot has not yet commenced
+      if (!midShot) {
+        missileX = playerX;
+      }
     });
   }
 
-  void fireMissile() {}
+  void fireMissile() {
+    if (!midShot) {
+      Timer.periodic(Duration(milliseconds: 20), (timer) {
+        //shots fired
+        midShot = true;
+
+//missile grows till it hits the top of the screen
+        setState(() {
+          missileheight += 10;
+        });
+        if (missileheight > MediaQuery.of(context).size.height * 3 / 4) {
+          //stop missile
+          resetMissile();
+          timer.cancel();
+          midShot = false;
+        }
+      });
+    }
+  }
+
+  void resetMissile() {
+    missileX = playerX;
+    missileheight = 10;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardListener(
-      focusNode: FocusNode(),
-      autofocus: true,
-      // onKeyEvent: (KeyEvent event) {if(event.physicalKey.)},
-      child: Column(
-        children: [
-          Expanded(
-            flex: 3,
-            child: Container(
-              color: Colors.pink[100],
-              child: Center(
-                child: Stack(
-                  children: [
-                    MyPlayer(playerX: playerX),
-                  ],
-                ),
+    return Column(
+      children: [
+        Expanded(
+          flex: 3,
+          child: Container(
+            color: Colors.pink[100],
+            child: Center(
+              child: Stack(
+                children: [
+                  MyMissile(
+                    missileX: missileX,
+                    missileheight: missileheight,
+                  ),
+                  MyPlayer(
+                    playerX: playerX,
+                  ),
+                ],
               ),
             ),
           ),
-          Expanded(
-            child: Container(
-                color: Colors.grey,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    MyButton(
-                      icon: Icons.arrow_back,
-                      function: moveLeft,
-                    ),
-                    MyButton(
-                      icon: Icons.arrow_upward,
-                      function: fireMissile,
-                    ),
-                    MyButton(
-                      icon: Icons.arrow_forward,
-                      function: moveRight,
-                    ),
-                  ],
-                )),
-          )
-        ],
-      ),
+        ),
+        Expanded(
+          child: Container(
+            color: Colors.grey,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                MyButton(
+                  icon: Icons.arrow_back,
+                  function: moveLeft,
+                ),
+                MyButton(
+                  icon: Icons.arrow_upward,
+                  function: fireMissile,
+                ),
+                MyButton(
+                  icon: Icons.arrow_forward,
+                  function: moveRight,
+                ),
+              ],
+            ),
+          ),
+        )
+      ],
     );
   }
 }
